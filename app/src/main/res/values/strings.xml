@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">iMaytber</string>
+    <string name="open">Open</string>
+    <string name="close">Close</string>
+    <string name="dialog_log_out">Вы точно хотите выйти?</string>
+    <string name="dialog_log_out_ok">okay</string>
+    <string name="dialog_log_out_cancel">cancel</string>
+    <string name="dialog_add">Title</string>
+    <string name="dialog_add_ok">okay</string>
+    <string name="dialog_add_cancel">cancel</string>
+    <string name="dialog_remove">Вы уверены, что хотите удалить данного пользователь из друзей?</string>
+    <string name="dialog_remove_ok">okey</string>
+    <string name="dialog_remove_cancel">cancel</string>
+    <string name="screen_one">Работа со строковыми списками используется не часто и, когда используется, то уже опытными андроид </string>
+    <string name="screen_two">Здесь я перечислил те неточности и избыточность в коде, которые я изо дня в день встречаю при ревью </string>
+    <string name="screen_tre">Android-программер) при изучении платформы сразу подсечёт, как дяди в примерах хранят строки, и </string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>
