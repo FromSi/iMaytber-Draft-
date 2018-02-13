@@ -41,11 +41,6 @@ public class LogOutDialog extends DialogFragment {
                         Intent.FLAG_ACTIVITY_CLEAR_TASK).addFlags(
                         Intent.FLAG_ACTIVITY_NEW_TASK));
                 dialog.dismiss();
-                db.getDialogDao().deleteAll();
-                db.getChatsDao().deleteAll();
-                db.getFriendsDao().deleteAll();
-                db.getUsersDao().deleteAll();
-                db.getProfileDao().deleteAll();
             }
         })
         .setNegativeButton(R.string.dialog_log_out_cancel, new DialogInterface.OnClickListener() {

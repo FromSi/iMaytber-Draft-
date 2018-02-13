@@ -25,6 +25,9 @@ public interface DialogDao {
     @Query("SELECT * FROM dialogroom where idchats=:idchats ORDER BY idmessage DESC LIMIT 1")
     DialogRoom getDialog(int idchats);
 
+    @Query("SELECT * FROM dialogroom where idmessage=:idmessage ORDER BY idmessage DESC LIMIT 1")
+    DialogRoom getDialog_2(int idmessage);
+
     @Query("SELECT * FROM (select * from dialogroom order by dialogroom.idmessage) as messages GROUP BY messages.idchats ORDER BY messages.idmessage desc")
     List<DialogRoom> getChats();
 }

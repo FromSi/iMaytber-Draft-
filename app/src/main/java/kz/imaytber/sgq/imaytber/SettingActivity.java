@@ -1,5 +1,8 @@
 package kz.imaytber.sgq.imaytber;
 
+import android.arch.persistence.room.Room;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.AppBarLayout;
@@ -21,9 +24,15 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 import com.github.badoualy.morphytoolbar.MorphyToolbar;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
+
+import kz.imaytber.sgq.imaytber.room.AppDatabase;
 
 public class SettingActivity extends AppCompatActivity implements View.OnClickListener {
     //    private ImageView avatar;
+    private AppDatabase db;
+    private final String URL_ROOM = "local";
     private Switch s_notification;
     private Switch s_theme;
     private ConstraintLayout l_language_1;
@@ -48,68 +57,35 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setting);
-//        avatar = findViewById(R.id.avatar);
-        s_notification = findViewById(R.id.s_notification);
-        s_theme = findViewById(R.id.s_theme);
-        t_language = findViewById(R.id.t_language);
-        l_language_1 = findViewById(R.id.l_language_1);
-        l_language_2 = findViewById(R.id.l_language_2);
-        t_russian = findViewById(R.id.t_russian);
-        t_english = findViewById(R.id.t_english);
-        t_english = findViewById(R.id.t_english);
-
-        t_notification = findViewById(R.id.t_notification);
-        t_theme = findViewById(R.id.t_theme);
-
-        r_russian = findViewById(R.id.r_russian);
-        r_english = findViewById(R.id.r_english);
-
-        t_russian.setOnClickListener(this);
-        t_english.setOnClickListener(this);
-        s_notification.setOnClickListener(this);
-        s_theme.setOnClickListener(this);
-        l_language_1.setOnClickListener(this);
-
-        r_russian.setOnClickListener(this);
-        r_english.setOnClickListener(this);
-
-        t_notification.setOnClickListener(this);
-        t_theme.setOnClickListener(this);
-
-
-        primary2 = getResources().getColor(R.color.primary2);
-        primaryDark2 = getResources().getColor(R.color.primary_dark2);
-
-        appBarLayout = (AppBarLayout) findViewById(R.id.layout_app_bar);
-        toolbar = findViewById(R.id.toolBar);
-        fabPhoto = (FloatingActionButton) findViewById(R.id.fab_photo);
-        disableAppBarDrag();
-        hideFab();
+        init();
 
         morphyToolbar = MorphyToolbar.builder(this, toolbar)
                 .withToolbarAsSupportActionBar()
-                .withTitle("Work [not so] serious talk")
-                .withSubtitle("160 participants")
+                .withAnimationDuration(1000)
+                .withTitle(db.getProfileDao().getProfile().getNick())
+                .withSubtitle("#" + db.getProfileDao().getProfile().getIduser())
                 .withPicture(R.drawable.ic_launcher_background)
                 .withHidePictureWhenCollapsed(false)
                 .build();
 
-        morphyToolbar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (morphyToolbar.isCollapsed()) {
-                    morphyToolbar.expand(primary2, primaryDark2, new MorphyToolbar.OnMorphyToolbarExpandedListener() {
-                        @Override
-                        public void onMorphyToolbarExpanded() {
-                            showFab();
-                        }
-                    });
-                } else {
-                    hideFab();
-                    morphyToolbar.collapse();
+        if (!"default".equals(db.getProfileDao().getProfile().getAvatar())) {
+            Picasso.with(getApplicationContext()).load(db.getProfileDao().getProfile().getAvatar()).into(new Target() {
+                @Override
+                public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                    morphyToolbar.setPicture(bitmap);
                 }
-            }
-        });
+
+                @Override
+                public void onBitmapFailed(Drawable errorDrawable) {
+
+                }
+
+                @Override
+                public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+                }
+            });
+        }
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_HOME_AS_UP
@@ -118,6 +94,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
+        new AnimationSleep().start();
 
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -193,35 +170,61 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         }
     }
 
-    private void disableAppBarDrag() {
-        // see http://stackoverflow.com/questions/34108501/how-to-disable-scrolling-of-appbarlayout-in-coordinatorlayout
-        CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) appBarLayout.getLayoutParams();
-        AppBarLayout.Behavior behavior = new AppBarLayout.Behavior();
-        params.setBehavior(behavior);
-        behavior.setDragCallback(new AppBarLayout.Behavior.DragCallback() {
-            @Override
-            public boolean canDrag(@NonNull AppBarLayout appBarLayout) {
-                return false;
+    private void init() {
+        db = Room.databaseBuilder(this, AppDatabase.class, URL_ROOM).allowMainThreadQueries().build();
+
+        s_notification = findViewById(R.id.s_notification);
+        s_theme = findViewById(R.id.s_theme);
+        t_language = findViewById(R.id.t_language);
+        l_language_1 = findViewById(R.id.l_language_1);
+        l_language_2 = findViewById(R.id.l_language_2);
+        t_russian = findViewById(R.id.t_russian);
+        t_english = findViewById(R.id.t_english);
+        t_english = findViewById(R.id.t_english);
+
+        t_notification = findViewById(R.id.t_notification);
+        t_theme = findViewById(R.id.t_theme);
+
+        r_russian = findViewById(R.id.r_russian);
+        r_english = findViewById(R.id.r_english);
+
+        t_russian.setOnClickListener(this);
+        t_english.setOnClickListener(this);
+        s_notification.setOnClickListener(this);
+        s_theme.setOnClickListener(this);
+        l_language_1.setOnClickListener(this);
+
+        r_russian.setOnClickListener(this);
+        r_english.setOnClickListener(this);
+
+        t_notification.setOnClickListener(this);
+        t_theme.setOnClickListener(this);
+
+
+        primary2 = getResources().getColor(R.color.primary2);
+        primaryDark2 = getResources().getColor(R.color.primary_dark2);
+
+        appBarLayout = (AppBarLayout) findViewById(R.id.layout_app_bar);
+        toolbar = findViewById(R.id.toolBar);
+        fabPhoto = (FloatingActionButton) findViewById(R.id.fab_photo);
+    }
+
+    class AnimationSleep extends Thread {
+        @Override
+        public void run() {
+            super.run();
+            try {
+                Thread.sleep(500);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        morphyToolbar.expand();
+                    }
+                });
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-        });
-    }
 
-    /** To hide fab, you need to remove its anchor */
-    private void hideFab() {
-        // Ugly bug makes the view go to bottom|center of screen before hiding, seems like you need to implement your own fab behavior...
-        fabPhoto.setVisibility(View.GONE);
-        final CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) fabPhoto.getLayoutParams();
-        layoutParams.setAnchorId(View.NO_ID);
-        fabPhoto.requestLayout();
-        fabPhoto.hide();
+        }
     }
-
-    private void showFab() {
-        final CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) fabPhoto.getLayoutParams();
-        layoutParams.setAnchorId(R.id.layout_app_bar);
-        layoutParams.anchorGravity = Gravity.RIGHT | Gravity.END | Gravity.BOTTOM;
-        fabPhoto.requestLayout();
-        fabPhoto.show();
-    }
-
 }

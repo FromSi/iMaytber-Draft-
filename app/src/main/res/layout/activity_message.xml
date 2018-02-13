@@ -25,21 +25,26 @@
         android:layout_width="match_parent"
         android:layout_height="50dp">
 
-        <Button
+        <ImageButton
             android:id="@+id/photo"
             android:layout_width="0dp"
+            android:src="@drawable/ic_burst_mode_black_24dp"
+            android:background="@null"
             android:layout_height="match_parent"
             android:layout_weight="1" />
 
         <EditText
             android:id="@+id/content"
             android:layout_width="0dp"
+            android:hint="Write a message..."
             android:layout_height="match_parent"
             android:layout_weight="5" />
 
-        <Button
+        <ImageButton
             android:id="@+id/send"
             android:layout_width="0dp"
+            android:src="@drawable/ic_send_black_24dp"
+            android:background="@null"
             android:layout_height="match_parent"
             android:layout_weight="1" />
     </LinearLayout>

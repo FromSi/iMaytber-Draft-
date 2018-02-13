@@ -10,7 +10,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +31,6 @@ import retrofit2.Response;
 
 public class RecyclerViewAdapterFriend extends RecyclerView.Adapter<RecyclerViewAdapterFriend.FriendAdapter> {
     private List<FriendsRoom> list = new ArrayList<>();
-    private FragmentManager fm;
     private AppDatabase db;
     private RestService restService;
     private Context context;
@@ -54,7 +56,9 @@ public class RecyclerViewAdapterFriend extends RecyclerView.Adapter<RecyclerView
 
     @Override
     public void onBindViewHolder(final RecyclerViewAdapterFriend.FriendAdapter holder, final int position) {
-        holder.nick.setText("ID: " + list.get(position).getIdfriend());
+        int idFriend = list.get(position).getIdfriend();
+        holder.nick.setText(db.getUsersDao().getUser(idFriend).getNick());
+        holder.idUser.setText("#" + db.getUsersDao().getUser(idFriend).getIduser());
         holder.trigger.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -64,6 +68,7 @@ public class RecyclerViewAdapterFriend extends RecyclerView.Adapter<RecyclerView
                 context.startActivity(intent);
             }
         });
+        Picasso.with(context).load(db.getUsersDao().getUser(idFriend).getAvatar()).into(holder.avatar);
     }
 
     public void removeItem(final int position) {
@@ -93,10 +98,14 @@ public class RecyclerViewAdapterFriend extends RecyclerView.Adapter<RecyclerView
     public class FriendAdapter extends RecyclerView.ViewHolder {
         ConstraintLayout trigger;
         TextView nick;
+        TextView idUser;
+        ImageView avatar;
         public FriendAdapter(View itemView) {
             super(itemView);
             trigger = itemView.findViewById(R.id.trigger);
             nick = itemView.findViewById(R.id.nick);
+            idUser = itemView.findViewById(R.id.idUser);
+            avatar = itemView.findViewById(R.id.avatar);
         }
     }
 }

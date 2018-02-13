@@ -8,7 +8,10 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.squareup.picasso.Picasso;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -16,6 +19,7 @@ import java.util.List;
 import java.util.Locale;
 
 import kz.imaytber.sgq.imaytber.room.AppDatabase;
+import kz.imaytber.sgq.imaytber.room.ChatsRoom;
 import kz.imaytber.sgq.imaytber.room.DialogRoom;
 
 /**
@@ -26,7 +30,6 @@ public class RecyclerViewAdapterDialog extends RecyclerView.Adapter<RecyclerView
     private List<DialogRoom> list;
     private Context context;
     private AppDatabase db;
-
     public void updateList(List<DialogRoom> list) {
         this.list = list;
     }
@@ -45,8 +48,9 @@ public class RecyclerViewAdapterDialog extends RecyclerView.Adapter<RecyclerView
     @Override
     public void onBindViewHolder(DialogAdapter holder, final int position) {
         SimpleDateFormat newTimeFormat = new SimpleDateFormat("hh:mm", Locale.getDefault());
-//        holder.nick.setText(list.get(position).getNick());
+        final String DEFAULT_AVATAR = "default";
         holder.content.setText(list.get(position).getContent());
+        ChatsRoom chatsRoom;
         try {
             holder.time.setText(newTimeFormat.format(new SimpleDateFormat("hh:mm:ss", Locale.getDefault())
                     .parse(list.get(position)
@@ -70,6 +74,19 @@ public class RecyclerViewAdapterDialog extends RecyclerView.Adapter<RecyclerView
                 context.startActivity(intent);
             }
         });
+//        Picasso.with(context).load(db.getUsersDao().getUser(list.get(position).getIdpartner()).getAvatar()).into(holder.avatar);
+
+        chatsRoom = db.getChatsDao().getChat_2(list.get(position).getIdchats());
+        if (chatsRoom.getIduser_1() != db.getProfileDao().getProfile().getIduser()){
+            holder.nick.setText(db.getUsersDao().getUser(chatsRoom.getIduser_1()).getNick());
+            if (!DEFAULT_AVATAR.equals(db.getUsersDao().getUser(chatsRoom.getIduser_1()).getAvatar()))
+            Picasso.with(context).load(db.getUsersDao().getUser(chatsRoom.getIduser_1()).getAvatar()).into(holder.avatar);
+        } else {
+            holder.nick.setText(db.getUsersDao().getUser(chatsRoom.getIduser_2()).getNick());
+            if (!DEFAULT_AVATAR.equals(db.getUsersDao().getUser(chatsRoom.getIduser_2()).getAvatar()))
+            Picasso.with(context).load(db.getUsersDao().getUser(chatsRoom.getIduser_2()).getAvatar()).into(holder.avatar);
+        }
+
     }
 
     @Override
@@ -82,12 +99,14 @@ public class RecyclerViewAdapterDialog extends RecyclerView.Adapter<RecyclerView
         TextView nick;
         TextView content;
         TextView time;
+        ImageView avatar;
         public DialogAdapter(View itemView) {
             super(itemView);
             trigger = itemView.findViewById(R.id.trigger);
             nick = itemView.findViewById(R.id.nick);
             content = itemView.findViewById(R.id.content);
             time = itemView.findViewById(R.id.time);
+            avatar = itemView.findViewById(R.id.avatar);
         }
     }
 }

@@ -68,7 +68,7 @@ public class FriendsActivity extends AppCompatActivity {
         add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new AddFriendDialog(db, adapter).show(getSupportFragmentManager(), "AddFriend");
+                new AddFriendDialog(db, adapter, restService).show(getSupportFragmentManager(), "AddFriend");
             }
         });
         initSwipe();
@@ -112,7 +112,6 @@ public class FriendsActivity extends AppCompatActivity {
                     @Override
                     public void onChildDraw(Canvas c, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
                         if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
-
                             View itemView = viewHolder.itemView;
                             p.setColor(Color.parseColor("#D32F2F"));
                             RectF background = new RectF((float) itemView.getRight() + dX, (float) itemView.getTop(), (float) itemView.getRight(), (float) itemView.getBottom());
@@ -126,14 +125,6 @@ public class FriendsActivity extends AppCompatActivity {
     }
 
     public void adapterTest() {
-//        List<FriendsRoom> list = new ArrayList<>();
-//        for (int i = 0; i < db.getFriendsDao().getFriends().size(); i++) {
-//            FriendsRoom friendsRoom = new FriendsRoom();
-//            friendsRoom.setIduser();
-//            friendsRoom.setIdfriend();
-//            friendsRoom.setIdfriends();
-//            list.add();
-//        }
         adapter.updateList(db.getFriendsDao().getFriends());
         adapter.notifyDataSetChanged();
     }

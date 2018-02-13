@@ -27,7 +27,7 @@ import kz.imaytber.sgq.imaytber.room.DialogRoom;
  */
 
 public class RecyclerViewAdapterMessage extends RecyclerView.Adapter<RecyclerViewAdapterMessage.HolderRC> {
-    private List<DialogRoom> list;
+    private List<DialogRoom> list = new ArrayList<>();
     private int idUser;
 
     public RecyclerViewAdapterMessage(int idUser) {

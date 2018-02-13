@@ -1,7 +1,10 @@
 package kz.imaytber.sgq.imaytber;
 
 import android.arch.persistence.room.Room;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -12,10 +15,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 
 import com.github.badoualy.morphytoolbar.MorphyToolbar;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import java.util.List;
 
@@ -41,14 +47,15 @@ public class MessageActivity extends AppCompatActivity {
     private RecyclerView message;
     private LinearLayoutManager linearLayoutManager;
     private EditText content;
-    private Button send;
+    private ImageView send;
+    private ImageView photo;
     private RecyclerViewAdapterMessage adapter;
     private int idUser;
     private int idFriend;
     private MessageThread messageThread;
     private boolean check = true;
     private Toolbar toolbar;
-
+    private MorphyToolbar morphyToolbar;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,28 +72,42 @@ public class MessageActivity extends AppCompatActivity {
         idUser = db.getProfileDao().getProfile().getIduser();
         toolbar = findViewById(R.id.toolBar);
 
-        MorphyToolbar morphyToolbar = MorphyToolbar.builder(this, toolbar)
-//                .withToolbarAsSupportActionBar()
-                .withTitle("Nick")
-                .withSubtitle("Title")
+        morphyToolbar = MorphyToolbar.builder(this, toolbar)
+                .withTitle(db.getUsersDao().getUser(idFriend).getNick())
+                .withSubtitle("#"+db.getUsersDao().getUser(idFriend).getIduser())
                 .withTitleColor(Color.BLACK)
                 .withSubtitleColor(Color.BLACK)
                 .withPicture(R.drawable.ic_launcher_background)
                 .withHidePictureWhenCollapsed(false)
                 .build();
 
-//        morphyToolbar.expand();
-//        morphyToolbar.collapse();
+        if (!"default".equals(db.getUsersDao().getUser(idFriend).getAvatar())){
+            Picasso.with(getApplicationContext()).load(db.getUsersDao().getUser(idFriend).getAvatar()).into(new Target() {
+                @Override
+                public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                    morphyToolbar.setPicture(bitmap);
+                }
+
+                @Override
+                public void onBitmapFailed(Drawable errorDrawable) {
+
+                }
+
+                @Override
+                public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+                }
+            });
+        }
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setReverseLayout(true);
         message = findViewById(R.id.message);
         message.setLayoutManager(linearLayoutManager);
-//        adapter = new RecyclerViewAdapterMessage();
-//        message.setAdapter(adapter);
         content = findViewById(R.id.content);
         send = findViewById(R.id.send);
+        photo = findViewById(R.id.photo);
         send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -96,6 +117,7 @@ public class MessageActivity extends AppCompatActivity {
                         content.getText().toString(), date, time).enqueue(new Callback<DialogGet>() {
                     @Override
                     public void onResponse(Call<DialogGet> call, Response<DialogGet> response) {
+                        if (response.body() != null)
                         if (db.getChatsDao().getChat_1(idFriend) == null) {
                             DialogRoom dialogRoom = new DialogRoom();
                             dialogRoom.setIdmessage(response.body().getIdmessage());
@@ -104,12 +126,12 @@ public class MessageActivity extends AppCompatActivity {
                             dialogRoom.setIdchats(response.body().getIdchats());
                             dialogRoom.setContent(response.body().getContent());
                             dialogRoom.setTime(response.body().getTime());
-                            dialogRoom.setIdpartner(response.body().getIdpartner());
                             db.getDialogDao().insert(dialogRoom);
                             ChatsRoom chatsRoom = new ChatsRoom();
                             chatsRoom.setIdchats(response.body().getIdchats());
                             chatsRoom.setIduser_1(idUser);
                             chatsRoom.setIduser_2(idFriend);
+                            db.getChatsDao().insert(chatsRoom);
                             adapter.updateList(dialogRoom);
                             adapter.notifyDataSetChanged();
                         } else {
@@ -120,7 +142,6 @@ public class MessageActivity extends AppCompatActivity {
                             dialogRoom.setIdchats(response.body().getIdchats());
                             dialogRoom.setContent(response.body().getContent());
                             dialogRoom.setTime(response.body().getTime());
-                            dialogRoom.setIdpartner(response.body().getIdpartner());
                             db.getDialogDao().insert(dialogRoom);
                             adapter.addItem(dialogRoom);
                             adapter.notifyDataSetChanged();
@@ -157,7 +178,6 @@ public class MessageActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-//        messageThread.stop();
         check = false;
         Log.d("MyThread", "Stop");
     }
@@ -173,43 +193,22 @@ public class MessageActivity extends AppCompatActivity {
                 adapter.notifyDataSetChanged();
             }
 
-
             while (check) {
                 try {
                     Thread.sleep(1000);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            if (sizeMS < db.getDialogDao().getAllDialogs(db.getChatsDao().getChat_1(idFriend).getIdchats()).size()) {
-                                sizeMS = db.getDialogDao().getAllDialogs(db.getChatsDao().getChat_1(idFriend).getIdchats()).size();
-                                adapter.updateList(db.getDialogDao().getAllDialogs(db.getChatsDao().getChat_1(idFriend).getIdchats()));
-                                adapter.notifyDataSetChanged();
-                            }
+                            if (db.getChatsDao().getChat_1(idFriend) != null)
+                                if (sizeMS < db.getDialogDao().getAllDialogs(db.getChatsDao().getChat_1(idFriend).getIdchats()).size()) {
+                                    sizeMS = db.getDialogDao().getAllDialogs(db.getChatsDao().getChat_1(idFriend).getIdchats()).size();
+                                    adapter.updateList(db.getDialogDao().getAllDialogs(db.getChatsDao().getChat_1(idFriend).getIdchats()));
+                                    adapter.notifyDataSetChanged();
+                                }
+
+
                         }
                     });
-
-
-//                    if (sizeMS < db.getDialogDao().getAllDialogs(db.getChatsDao().getChat(idFriend).getIdchats()).size()){
-//                        sizeMS = db.getDialogDao().getAllDialogs(db.getChatsDao().getChat(idFriend).getIdchats()).size();
-//                        adapter.updateList(db.getDialogDao().getAllDialogs(db.getChatsDao().getChat(idFriend).getIdchats()));
-//                        adapter.notifyDataSetChanged();
-
-
-//                        for (int i = 0; i < db.getDialogDao().getAllDialogs(db.getChatsDao().getChat(idFriend).getIdchats()).size(); i++) {
-//                            DialogRoom dialogRoom = new DialogRoom();
-//                            dialogRoom.setIdmessage(db.getDialogDao().getAllDialogs(db.getChatsDao().getChat(idFriend).getIdchats()).get(i).getIdmessage());
-//                            dialogRoom.setDate(db.getDialogDao().getAllDialogs(db.getChatsDao().getChat(idFriend).getIdchats()).get(i).getDate());
-//                            dialogRoom.setIdincoming(db.getDialogDao().getAllDialogs(db.getChatsDao().getChat(idFriend).getIdchats()).get(i).getIdincoming());
-//                            dialogRoom.setIdchats(db.getDialogDao().getAllDialogs(db.getChatsDao().getChat(idFriend).getIdchats()).get(i).getIdchats());
-//                            dialogRoom.setContent(db.getDialogDao().getAllDialogs(db.getChatsDao().getChat(idFriend).getIdchats()).get(i).getContent());
-//                            dialogRoom.setTime(db.getDialogDao().getAllDialogs(db.getChatsDao().getChat(idFriend).getIdchats()).get(i).getTime());
-//                            if (db.getDialogDao().getAllDialogs(db.getChatsDao().getChat(idFriend).getIdchats()).get(i).getIdincoming() != idFriend) {
-//                                adapter.addItem(dialogRoom);
-//                                adapter.notifyDataSetChanged();
-//                            }
-//                        }
-//                }
-
 
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -218,5 +217,5 @@ public class MessageActivity extends AppCompatActivity {
             }
         }
 
-}
+    }
 }

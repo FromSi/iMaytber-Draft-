@@ -19,8 +19,10 @@ import kz.imaytber.sgq.imaytber.R;
 import kz.imaytber.sgq.imaytber.RecyclerViewAdapterFriend;
 import kz.imaytber.sgq.imaytber.retrofit.FriendGet;
 import kz.imaytber.sgq.imaytber.retrofit.RestService;
+import kz.imaytber.sgq.imaytber.retrofit.UserGet;
 import kz.imaytber.sgq.imaytber.room.AppDatabase;
 import kz.imaytber.sgq.imaytber.room.FriendsRoom;
+import kz.imaytber.sgq.imaytber.room.UsersRoom;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -36,25 +38,17 @@ public class AddFriendDialog extends DialogFragment {
     private TextView idUser;
     private AppDatabase db;
     private RestService restService;
-    private Gson gson;
-    private Retrofit retrofit;
-    private final String URL_RETROFIT = "https://fs-messenger.herokuapp.com/";
     private RecyclerViewAdapterFriend adapter;
     @SuppressLint("ValidFragment")
-    public AddFriendDialog(AppDatabase db, RecyclerViewAdapterFriend adapter) {
+    public AddFriendDialog(AppDatabase db, RecyclerViewAdapterFriend adapter, RestService restService) {
         this.db = db;
         this.adapter = adapter;
+        this.restService = restService;
     }
 
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        gson = new GsonBuilder().create();
-        retrofit = new Retrofit.Builder()
-                .baseUrl(URL_RETROFIT)
-                .addConverterFactory(GsonConverterFactory.create(gson))
-                .build();
-        restService = retrofit.create(RestService.class);
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         final LayoutInflater inflater = getActivity().getLayoutInflater();
         builder.setView(inflater.inflate(R.layout.dialog_add_friend, null))
@@ -72,7 +66,27 @@ public class AddFriendDialog extends DialogFragment {
                                 friendsRoom.setIdfriends(Integer.parseInt(response.body().getIdfriends()));
                                 db.getFriendsDao().insert(friendsRoom);
                                 adapter.addItem(friendsRoom);
-                                adapter.notifyDataSetChanged();
+                                if (db.getUsersDao().getUser(Integer.parseInt(response.body().getIdfriend())) == null){
+                                    restService.getUser(Integer.parseInt(response.body().getIdfriend())).enqueue(new Callback<UserGet>() {
+                                        @Override
+                                        public void onResponse(Call<UserGet> call, Response<UserGet> response) {
+                                            UsersRoom usersRoom = new UsersRoom();
+                                            usersRoom.setNick(response.body().getNick());
+                                            usersRoom.setAvatar(response.body().getAvatar());
+                                            usersRoom.setIduser(response.body().getIduser());
+                                            db.getUsersDao().insert(usersRoom);
+                                            Log.d("Test228", "Norm");
+                                            adapter.notifyDataSetChanged();
+                                        }
+
+                                        @Override
+                                        public void onFailure(Call<UserGet> call, Throwable t) {
+                                            Log.d("Test228", "Field");
+                                        }
+                                    });
+                                } else {
+                                    adapter.notifyDataSetChanged();
+                                }
                                 Log.d("Test", "Connect");
                             }
 

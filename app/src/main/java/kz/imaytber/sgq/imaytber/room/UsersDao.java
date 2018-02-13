@@ -10,13 +10,13 @@ import java.util.List;
 @Dao
 public interface UsersDao {
     @Insert
-    void insertAll(UsersRoom... usersRooms);
-
-    @Insert
     void insert(UsersRoom usersRooms);
 
     @Query("DELETE FROM usersroom")
     void deleteAll();
+
+    @Query("SELECT * FROM usersroom where iduser=:iduser")
+    UsersRoom getUser(int iduser);
 
     @Query("SELECT * FROM usersroom")
     List<UsersRoom> getUsers();

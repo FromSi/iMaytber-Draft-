@@ -2,6 +2,7 @@ package kz.imaytber.sgq.imaytber.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -11,6 +12,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.File;
 
 import kz.imaytber.sgq.imaytber.LockActivity;
 import kz.imaytber.sgq.imaytber.R;
@@ -41,6 +44,8 @@ public class ScreenSlideWelcomeFragment extends Fragment {
         finish.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                File d = new File(Environment.getExternalStorageDirectory() + "iMaytber");
+                d.mkdirs();
                 lock = new Intent(getContext(), LockActivity.class);
                 startActivity(lock.addFlags(
                         Intent.FLAG_ACTIVITY_CLEAR_TASK).addFlags(

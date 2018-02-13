@@ -18,6 +18,8 @@ public interface RestService {
                          @Query("content") String content,@Query("date") String date, @Query("time") String time);
     @POST("friend")
     Call<FriendGet> addFriend(@Query("iduser") int iduser, @Query("idfriend") int idfriend);
+    @GET("user")
+    Call<UserGet> getUser(@Query("iduser") int iduser);
     @GET("dialog")
     Call<List<DialogGet>> getAllDialog(@Query("iduser") int iduser);
     @GET("dialog-check")

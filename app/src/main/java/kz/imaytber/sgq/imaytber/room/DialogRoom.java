@@ -13,15 +13,6 @@ public class DialogRoom {
     private int idchats;
     private String time;
     private String content;
-    private int idpartner;
-
-    public int getIdpartner() {
-        return idpartner;
-    }
-
-    public void setIdpartner(int idpartner) {
-        this.idpartner = idpartner;
-    }
 
     public int getIdmessage() {
         return idmessage;

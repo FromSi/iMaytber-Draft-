@@ -8,8 +8,6 @@ import java.util.List;
  */
 @Dao
 public interface FriendsDao {
-    @Insert
-    void insertAll(FriendsRoom... friendsRoom);
 
     @Insert
     void insert(FriendsRoom friendsRoom);
