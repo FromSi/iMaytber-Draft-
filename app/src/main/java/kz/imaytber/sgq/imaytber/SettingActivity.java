@@ -2,6 +2,7 @@ package kz.imaytber.sgq.imaytber;
 
 import android.arch.persistence.room.Room;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
@@ -26,6 +27,8 @@ import android.widget.TextView;
 import com.github.badoualy.morphytoolbar.MorphyToolbar;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
+
+import java.io.File;
 
 import kz.imaytber.sgq.imaytber.room.AppDatabase;
 
@@ -69,22 +72,8 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                 .build();
 
         if (!"default".equals(db.getProfileDao().getProfile().getAvatar())) {
-            Picasso.with(getApplicationContext()).load(db.getProfileDao().getProfile().getAvatar()).into(new Target() {
-                @Override
-                public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                    morphyToolbar.setPicture(bitmap);
-                }
-
-                @Override
-                public void onBitmapFailed(Drawable errorDrawable) {
-
-                }
-
-                @Override
-                public void onPrepareLoad(Drawable placeHolderDrawable) {
-
-                }
-            });
+            File file = new File(this.getCacheDir(), db.getProfileDao().getProfile().getAvatar().substring(73)+".jpg");
+            morphyToolbar.setPicture(BitmapFactory.decodeFile(file.getAbsolutePath()));
         }
 
         if (getSupportActionBar() != null) {

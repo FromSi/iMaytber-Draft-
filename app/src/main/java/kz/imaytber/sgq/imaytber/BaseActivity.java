@@ -3,6 +3,9 @@ package kz.imaytber.sgq.imaytber;
 
 import android.arch.persistence.room.Room;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -24,6 +27,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.squareup.picasso.Picasso;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -128,8 +135,7 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
                             public void run() {
                                 String str = db.getProfileDao().getProfile().getAvatar();
                                 if (!checkAvatar.equals(str)) {
-                                    checkAvatar = db.getProfileDao().getProfile().getAvatar();
-                                    Picasso.with(getApplicationContext()).load(checkAvatar).into(avatar);
+                                    loadImg(db.getProfileDao().getProfile().getAvatar());
                                 }
                             }
                         });
@@ -232,6 +238,47 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
                 Log.d("Test228", "Field");
             }
         });
+    }
+
+    private void chashImg(ImageView img, String name){
+        try {
+            OutputStream outputStream = new FileOutputStream(new File(this.getCacheDir(), name.substring(73)+".jpg"));
+            Bitmap bitmap = ((BitmapDrawable)img.getDrawable()).getBitmap();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
+            outputStream.flush();
+            outputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadImg(final String uri){
+        if (uri.equals("default")){
+            Picasso.with(getApplicationContext())
+                    .load(R.drawable.ic_launcher_background)
+                    .into(avatar);
+        } else {
+            File file = new File(this.getCacheDir(), uri.substring(73)+".jpg");
+            if (file.isFile()){
+                avatar.setImageBitmap(BitmapFactory.decodeFile(file.getAbsolutePath()));
+            } else {
+                Picasso.with(getApplicationContext())
+                        .load(uri)
+                        .into(avatar, new com.squareup.picasso.Callback() {
+                            @Override
+                            public void onSuccess() {
+                                chashImg(avatar,uri);
+                            }
+
+                            @Override
+                            public void onError() {
+
+                            }
+                        });
+            }
+
+        }
+
     }
 
     private void init(){

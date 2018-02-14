@@ -23,6 +23,7 @@ import com.google.gson.GsonBuilder;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
+import java.io.File;
 import java.util.List;
 
 import kz.imaytber.sgq.imaytber.retrofit.ChatsGet;
@@ -82,22 +83,8 @@ public class MessageActivity extends AppCompatActivity {
                 .build();
 
         if (!"default".equals(db.getUsersDao().getUser(idFriend).getAvatar())){
-            Picasso.with(getApplicationContext()).load(db.getUsersDao().getUser(idFriend).getAvatar()).into(new Target() {
-                @Override
-                public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                    morphyToolbar.setPicture(bitmap);
-                }
-
-                @Override
-                public void onBitmapFailed(Drawable errorDrawable) {
-
-                }
-
-                @Override
-                public void onPrepareLoad(Drawable placeHolderDrawable) {
-
-                }
-            });
+            File file = new File(this.getCacheDir(), db.getUsersDao().getUser(idFriend).getAvatar().substring(73)+".jpg");
+            morphyToolbar.setPicture(BitmapFactory.decodeFile(file.getAbsolutePath()));
         }
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);

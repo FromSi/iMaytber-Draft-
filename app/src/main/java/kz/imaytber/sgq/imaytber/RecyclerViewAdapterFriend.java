@@ -2,6 +2,10 @@ package kz.imaytber.sgq.imaytber;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
@@ -15,6 +19,9 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,7 +75,7 @@ public class RecyclerViewAdapterFriend extends RecyclerView.Adapter<RecyclerView
                 context.startActivity(intent);
             }
         });
-        Picasso.with(context).load(db.getUsersDao().getUser(idFriend).getAvatar()).into(holder.avatar);
+        loadImg(db.getUsersDao().getUser(idFriend).getAvatar(), holder.avatar);
     }
 
     public void removeItem(final int position) {
@@ -106,6 +113,45 @@ public class RecyclerViewAdapterFriend extends RecyclerView.Adapter<RecyclerView
             nick = itemView.findViewById(R.id.nick);
             idUser = itemView.findViewById(R.id.idUser);
             avatar = itemView.findViewById(R.id.avatar);
+        }
+    }
+
+    private void chashImg(ImageView img, String name){
+        try {
+            OutputStream outputStream = new FileOutputStream(new File(context.getCacheDir(), name.substring(73)+".jpg"));
+            Bitmap bitmap = ((BitmapDrawable)img.getDrawable()).getBitmap();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
+            outputStream.flush();
+            outputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadImg(final String uri, final ImageView avatar){
+        if (uri.equals("default")){
+            Picasso.with(context)
+                    .load(R.drawable.ic_launcher_background)
+                    .into(avatar);
+        } else {
+            File file = new File(context.getCacheDir(), uri.substring(73)+".jpg");
+            if (file.isFile()){
+                avatar.setImageBitmap(BitmapFactory.decodeFile(file.getAbsolutePath()));
+            } else {
+                Picasso.with(context)
+                        .load(uri)
+                        .into(avatar, new com.squareup.picasso.Callback() {
+                            @Override
+                            public void onSuccess() {
+                                chashImg(avatar,uri);
+                            }
+
+                            @Override
+                            public void onError() {
+
+                            }
+                        });
+            }
         }
     }
 }

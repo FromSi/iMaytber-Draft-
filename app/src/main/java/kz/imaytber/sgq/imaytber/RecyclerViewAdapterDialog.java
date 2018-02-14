@@ -2,6 +2,9 @@ package kz.imaytber.sgq.imaytber;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.RecyclerView;
@@ -13,6 +16,9 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -74,17 +80,13 @@ public class RecyclerViewAdapterDialog extends RecyclerView.Adapter<RecyclerView
                 context.startActivity(intent);
             }
         });
-//        Picasso.with(context).load(db.getUsersDao().getUser(list.get(position).getIdpartner()).getAvatar()).into(holder.avatar);
-
         chatsRoom = db.getChatsDao().getChat_2(list.get(position).getIdchats());
         if (chatsRoom.getIduser_1() != db.getProfileDao().getProfile().getIduser()){
             holder.nick.setText(db.getUsersDao().getUser(chatsRoom.getIduser_1()).getNick());
-            if (!DEFAULT_AVATAR.equals(db.getUsersDao().getUser(chatsRoom.getIduser_1()).getAvatar()))
-            Picasso.with(context).load(db.getUsersDao().getUser(chatsRoom.getIduser_1()).getAvatar()).into(holder.avatar);
+            loadImg(db.getUsersDao().getUser(chatsRoom.getIduser_1()).getAvatar(), holder.avatar);
         } else {
             holder.nick.setText(db.getUsersDao().getUser(chatsRoom.getIduser_2()).getNick());
-            if (!DEFAULT_AVATAR.equals(db.getUsersDao().getUser(chatsRoom.getIduser_2()).getAvatar()))
-            Picasso.with(context).load(db.getUsersDao().getUser(chatsRoom.getIduser_2()).getAvatar()).into(holder.avatar);
+            loadImg(db.getUsersDao().getUser(chatsRoom.getIduser_2()).getAvatar(), holder.avatar);
         }
 
     }
@@ -107,6 +109,45 @@ public class RecyclerViewAdapterDialog extends RecyclerView.Adapter<RecyclerView
             content = itemView.findViewById(R.id.content);
             time = itemView.findViewById(R.id.time);
             avatar = itemView.findViewById(R.id.avatar);
+        }
+    }
+
+    private void chashImg(ImageView img, String name){
+        try {
+            OutputStream outputStream = new FileOutputStream(new File(context.getCacheDir(), name.substring(73)+".jpg"));
+            Bitmap bitmap = ((BitmapDrawable)img.getDrawable()).getBitmap();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
+            outputStream.flush();
+            outputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadImg(final String uri, final ImageView avatar){
+        if (uri.equals("default")){
+            Picasso.with(context)
+                    .load(R.drawable.ic_launcher_background)
+                    .into(avatar);
+        } else {
+            File file = new File(context.getCacheDir(), uri.substring(73)+".jpg");
+            if (file.isFile()){
+                avatar.setImageBitmap(BitmapFactory.decodeFile(file.getAbsolutePath()));
+            } else {
+                Picasso.with(context)
+                        .load(uri)
+                        .into(avatar, new com.squareup.picasso.Callback() {
+                            @Override
+                            public void onSuccess() {
+                                chashImg(avatar,uri);
+                            }
+
+                            @Override
+                            public void onError() {
+
+                            }
+                        });
+            }
         }
     }
 }
