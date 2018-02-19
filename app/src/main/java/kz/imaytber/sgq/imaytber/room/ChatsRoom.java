@@ -12,6 +12,7 @@ public class ChatsRoom {
     private int idchats;
     private int iduser_1;
     private int iduser_2;
+    private String key;
 
     public int getIdchats() {
         return idchats;
@@ -35,5 +36,13 @@ public class ChatsRoom {
 
     public void setIduser_2(int iduser_2) {
         this.iduser_2 = iduser_2;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
     }
 }

@@ -23,6 +23,9 @@ public class LoginGet {
     @SerializedName("login")
     @Expose
     private String login;
+    @SerializedName("api")
+    @Expose
+    private String api;
 
     public String getNick() {
         return nick;
@@ -64,4 +67,11 @@ public class LoginGet {
         this.login = login;
     }
 
+    public String getApi() {
+        return api;
+    }
+
+    public void setApi(String api) {
+        this.api = api;
+    }
 }

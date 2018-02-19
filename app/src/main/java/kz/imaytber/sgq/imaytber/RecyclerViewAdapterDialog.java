@@ -89,6 +89,13 @@ public class RecyclerViewAdapterDialog extends RecyclerView.Adapter<RecyclerView
             loadImg(db.getUsersDao().getUser(chatsRoom.getIduser_2()).getAvatar(), holder.avatar);
         }
 
+        if (list.get(position).getPhoto() != null){
+            holder.photo.setVisibility(View.VISIBLE);
+        } else {
+            holder.photo.setVisibility(View.GONE);
+        }
+
+
     }
 
     @Override
@@ -102,6 +109,7 @@ public class RecyclerViewAdapterDialog extends RecyclerView.Adapter<RecyclerView
         TextView content;
         TextView time;
         ImageView avatar;
+        ImageView photo;
         public DialogAdapter(View itemView) {
             super(itemView);
             trigger = itemView.findViewById(R.id.trigger);
@@ -109,6 +117,7 @@ public class RecyclerViewAdapterDialog extends RecyclerView.Adapter<RecyclerView
             content = itemView.findViewById(R.id.content);
             time = itemView.findViewById(R.id.time);
             avatar = itemView.findViewById(R.id.avatar);
+            photo = itemView.findViewById(R.id.photo);
         }
     }
 

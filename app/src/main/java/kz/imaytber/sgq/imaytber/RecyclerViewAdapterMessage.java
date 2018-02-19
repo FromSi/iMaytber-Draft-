@@ -1,8 +1,10 @@
 package kz.imaytber.sgq.imaytber;
 
+import android.graphics.Color;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,6 +30,7 @@ import kz.imaytber.sgq.imaytber.room.DialogRoom;
 
 public class RecyclerViewAdapterMessage extends RecyclerView.Adapter<RecyclerViewAdapterMessage.HolderRC> {
     private List<DialogRoom> list = new ArrayList<>();
+    private List<Boolean> booleanList;
     private int idUser;
 
     public RecyclerViewAdapterMessage(int idUser) {
@@ -36,6 +39,10 @@ public class RecyclerViewAdapterMessage extends RecyclerView.Adapter<RecyclerVie
 
     public void updateList(List<DialogRoom> list) {
         this.list = list;
+        booleanList = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            booleanList.add(false);
+        }
     }
 
     public void updateList(DialogRoom dialogRoom) {
@@ -49,7 +56,7 @@ public class RecyclerViewAdapterMessage extends RecyclerView.Adapter<RecyclerVie
     }
 
     @Override
-    public void onBindViewHolder(HolderRC holder, int position) {
+    public void onBindViewHolder(final HolderRC holder, final int position) {
         SimpleDateFormat newTimeFormat = new SimpleDateFormat("hh:mm", Locale.getDefault());
         holder.content.setText(list.get(position).getContent());
         try {
@@ -59,19 +66,60 @@ public class RecyclerViewAdapterMessage extends RecyclerView.Adapter<RecyclerVie
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        if (idUser == list.get(position).getIdincoming()){
+        if (idUser == list.get(position).getIdincoming()) {
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            layoutParams.setMarginEnd((int)holder.itemView.getResources().getDimension(R.dimen.f_content_layout_marginStart));
-            layoutParams.setMarginStart((int)holder.itemView.getResources().getDimension(R.dimen.f_content_layout_marginEnd));
+            layoutParams.setMarginEnd((int) holder.itemView.getResources().getDimension(R.dimen.f_content_layout_marginStart));
+            layoutParams.setMarginStart((int) holder.itemView.getResources().getDimension(R.dimen.f_content_layout_marginEnd));
             holder.l_content.setLayoutParams(layoutParams);
             holder.l_content.setGravity(Gravity.START);
         } else {
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            layoutParams.setMarginEnd((int)holder.itemView.getResources().getDimension(R.dimen.f_content_layout_marginEnd));
-            layoutParams.setMarginStart((int)holder.itemView.getResources().getDimension(R.dimen.f_content_layout_marginStart));
+            layoutParams.setMarginEnd((int) holder.itemView.getResources().getDimension(R.dimen.f_content_layout_marginEnd));
+            layoutParams.setMarginStart((int) holder.itemView.getResources().getDimension(R.dimen.f_content_layout_marginStart));
             holder.l_content.setLayoutParams(layoutParams);
             holder.l_content.setGravity(Gravity.END);
         }
+
+//        holder.view.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                for (int i = 0; i < booleanList.size(); i++) {
+//                    if (booleanList.get(i)) {
+//                        if (!booleanList.get(position)) {
+//                            holder.item.setBackgroundColor(Color.parseColor("#80d8ff"));
+//                            booleanList.set(position, true);
+//                        } else {
+//                            holder.item.setBackgroundColor(Color.parseColor("#fafafa"));
+//                            booleanList.set(position, false);
+//                        }
+//                        return;
+//                    }
+//                }
+//                holder.item.setBackgroundColor(Color.parseColor("#fafafa"));
+//                booleanList.set(position, false);
+//                Log.d("ClickTest", "ClickMessage " + booleanList.get(position));
+//            }
+//        });
+//
+//        holder.view.setOnLongClickListener(new View.OnLongClickListener() {
+//            @Override
+//            public boolean onLongClick(View v) {
+//                holder.item.setBackgroundColor(Color.parseColor("#80d8ff"));
+//                booleanList.set(position, true);
+//                Log.d("LongTest", "LongMessage " + booleanList.get(position));
+//                return true;
+//            }
+//        });
+//        if (list.get(position).getPhoto() != null){
+//            holder.photo.setVisibility(View.VISIBLE);
+//        }
+
+        if (list.get(position).getPhoto() != null){
+            holder.photo.setVisibility(View.VISIBLE);
+        } else {
+            holder.photo.setVisibility(View.GONE);
+        }
+
     }
 
     @Override
@@ -91,11 +139,18 @@ public class RecyclerViewAdapterMessage extends RecyclerView.Adapter<RecyclerVie
         TextView content;
         TextView time;
         LinearLayout l_content;
+        LinearLayout item;
+        View view;
+        ImageView photo;
+
         public HolderRC(View itemView) {
             super(itemView);
             content = itemView.findViewById(R.id.content);
             time = itemView.findViewById(R.id.time);
             l_content = itemView.findViewById(R.id.l_content);
+            item = itemView.findViewById(R.id.item);
+            photo = itemView.findViewById(R.id.photo);
+            this.view = itemView;
         }
     }
 

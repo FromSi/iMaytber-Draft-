@@ -1,8 +1,10 @@
 package kz.imaytber.sgq.imaytber;
 
 import android.arch.persistence.room.Room;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
@@ -25,16 +27,26 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 import com.github.badoualy.morphytoolbar.MorphyToolbar;
+import com.google.gson.GsonBuilder;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 
+import kz.imaytber.sgq.imaytber.dialog.EditProfilDialog;
+import kz.imaytber.sgq.imaytber.retrofit.RestService;
 import kz.imaytber.sgq.imaytber.room.AppDatabase;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class SettingActivity extends AppCompatActivity implements View.OnClickListener {
     //    private ImageView avatar;
     private AppDatabase db;
+    private RestService restService;
+    private Retrofit retrofit;
+    private final String URL_RETROFIT = "https://fs-messenger.herokuapp.com/";
     private final String URL_ROOM = "local";
     private Switch s_notification;
     private Switch s_theme;
@@ -49,12 +61,14 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
     private RadioButton r_english;
     private Toolbar toolbar;
 
-    MorphyToolbar morphyToolbar;
-    FloatingActionButton fabPhoto;
-    AppBarLayout appBarLayout;
+    private MorphyToolbar morphyToolbar;
+    private FloatingActionButton fabPhoto;
+    private AppBarLayout appBarLayout;
 
     int primary2;
     int primaryDark2;
+
+    private boolean checkBool = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,13 +80,19 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                 .withToolbarAsSupportActionBar()
                 .withAnimationDuration(1000)
                 .withTitle(db.getProfileDao().getProfile().getNick())
-                .withSubtitle("#" + db.getProfileDao().getProfile().getIduser())
+                .withSubtitle("#"+db.getProfileDao().getProfile().getIduser())
                 .withPicture(R.drawable.ic_launcher_background)
                 .withHidePictureWhenCollapsed(false)
                 .build();
 
+        retrofit = new Retrofit.Builder()
+                .baseUrl(URL_RETROFIT)
+                .addConverterFactory(GsonConverterFactory.create(new GsonBuilder().create()))
+                .build();
+        restService = retrofit.create(RestService.class);
+
         if (!"default".equals(db.getProfileDao().getProfile().getAvatar())) {
-            File file = new File(this.getCacheDir(), db.getProfileDao().getProfile().getAvatar().substring(73)+".jpg");
+            File file = new File(this.getCacheDir(), db.getProfileDao().getProfile().getAvatar().substring(73) + ".jpg");
             morphyToolbar.setPicture(BitmapFactory.decodeFile(file.getAbsolutePath()));
         }
 
@@ -87,6 +107,8 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
 
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        new SettingThread().start();
     }
 
     @Override
@@ -144,7 +166,6 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                 } else {
                     s_notification.setChecked(true);
                 }
-
                 Log.d("SettingLOG", "True");
                 break;
             case R.id.t_theme:
@@ -153,7 +174,11 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                 } else {
                     s_theme.setChecked(true);
                 }
-
+                Log.d("SettingLOG", "True");
+                break;
+            case R.id.fab_photo:
+                new EditProfilDialog(db, restService)
+                        .show(getSupportFragmentManager(), "Edit_Profil");
                 Log.d("SettingLOG", "True");
                 break;
         }
@@ -162,6 +187,9 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
     private void init() {
         db = Room.databaseBuilder(this, AppDatabase.class, URL_ROOM).allowMainThreadQueries().build();
 
+        appBarLayout = findViewById(R.id.layout_app_bar);
+        toolbar = findViewById(R.id.toolBar);
+        fabPhoto = findViewById(R.id.fab_photo);
         s_notification = findViewById(R.id.s_notification);
         s_theme = findViewById(R.id.s_theme);
         t_language = findViewById(R.id.t_language);
@@ -183,6 +211,8 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         s_theme.setOnClickListener(this);
         l_language_1.setOnClickListener(this);
 
+        fabPhoto.setOnClickListener(this);
+
         r_russian.setOnClickListener(this);
         r_english.setOnClickListener(this);
 
@@ -193,9 +223,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         primary2 = getResources().getColor(R.color.primary2);
         primaryDark2 = getResources().getColor(R.color.primary_dark2);
 
-        appBarLayout = (AppBarLayout) findViewById(R.id.layout_app_bar);
-        toolbar = findViewById(R.id.toolBar);
-        fabPhoto = (FloatingActionButton) findViewById(R.id.fab_photo);
+
     }
 
     class AnimationSleep extends Thread {
@@ -214,6 +242,82 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                 e.printStackTrace();
             }
 
+        }
+    }
+
+    private void chashImg(ImageView img, String name) {
+        try {
+            OutputStream outputStream = new FileOutputStream(new File(this.getCacheDir(), name.substring(73) + ".jpg"));
+            Bitmap bitmap = ((BitmapDrawable) img.getDrawable()).getBitmap();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
+            outputStream.flush();
+            outputStream.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadImg(final String uri) {
+        final File file = new File(this.getCacheDir(), uri.substring(73) + ".jpg");
+        if (file.isFile()) {
+            morphyToolbar.setPicture(BitmapFactory.decodeFile(file.getAbsolutePath()));
+        } else {
+            final ImageView img = new ImageView(this);
+            Picasso.with(getApplicationContext())
+                    .load(uri)
+                    .into(img, new com.squareup.picasso.Callback() {
+                        @Override
+                        public void onSuccess() {
+                            chashImg(img, uri);
+                            morphyToolbar.setPicture(BitmapFactory.decodeFile(file.getAbsolutePath()));
+                        }
+
+                        @Override
+                        public void onError() {
+
+                        }
+                    });
+        }
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        checkBool = false;
+    }
+
+    class SettingThread extends Thread {
+        private String checkAvatar = "default";
+        private String checkNick = db.getProfileDao().getProfile().getNick();
+
+        @Override
+        public void run() {
+            super.run();
+            while (checkBool) {
+                try {
+                    Thread.sleep(1000);
+                    if (checkBool) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                morphyToolbar.setTitle(checkNick);
+                                if (!checkAvatar.equals(db.getProfileDao().getProfile().getAvatar())) {
+                                    checkAvatar = db.getProfileDao().getProfile().getAvatar();
+                                    loadImg(db.getProfileDao().getProfile().getAvatar());
+                                }
+                                if (!checkNick.equals(db.getProfileDao().getProfile().getNick())) {
+                                    checkNick = db.getProfileDao().getProfile().getNick();
+                                    morphyToolbar.setTitle(checkNick);
+                                }
+                            }
+                        });
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 }

@@ -1,10 +1,12 @@
 package kz.imaytber.sgq.imaytber;
 
 import android.arch.persistence.room.Room;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -18,6 +20,10 @@ import android.widget.EditText;
 import android.widget.ImageView;
 
 import com.github.badoualy.morphytoolbar.MorphyToolbar;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.squareup.picasso.Picasso;
@@ -26,6 +32,8 @@ import com.squareup.picasso.Target;
 import java.io.File;
 import java.util.List;
 
+import kz.imaytber.sgq.imaytber.crypto.FS_RC4;
+import kz.imaytber.sgq.imaytber.crypto.KeyGen;
 import kz.imaytber.sgq.imaytber.retrofit.ChatsGet;
 import kz.imaytber.sgq.imaytber.retrofit.DialogGet;
 import kz.imaytber.sgq.imaytber.retrofit.RestService;
@@ -38,7 +46,7 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class MessageActivity extends AppCompatActivity {
+public class MessageActivity extends AppCompatActivity implements View.OnClickListener {
     private AppDatabase db;
     private RestService restService;
     private Gson gson;
@@ -50,13 +58,16 @@ public class MessageActivity extends AppCompatActivity {
     private EditText content;
     private ImageView send;
     private ImageView photo;
+    private Button clear;
     private RecyclerViewAdapterMessage adapter;
     private int idUser;
     private int idFriend;
     private MessageThread messageThread;
     private boolean check = true;
+//    private boolean checkPhoto = false;
     private Toolbar toolbar;
     private MorphyToolbar morphyToolbar;
+    private Uri uri;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -95,56 +106,10 @@ public class MessageActivity extends AppCompatActivity {
         content = findViewById(R.id.content);
         send = findViewById(R.id.send);
         photo = findViewById(R.id.photo);
-        send.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String date = String.valueOf(android.text.format.DateFormat.format("yyyy-MM-dd", new java.util.Date()));
-                String time = String.valueOf(android.text.format.DateFormat.format("hh:mm:ss", new java.util.Date()));
-                restService.addDialog(db.getProfileDao().getProfile().getIduser(), idFriend,
-                        content.getText().toString(), date, time).enqueue(new Callback<DialogGet>() {
-                    @Override
-                    public void onResponse(Call<DialogGet> call, Response<DialogGet> response) {
-                        if (response.body() != null)
-                        if (db.getChatsDao().getChat_1(idFriend) == null) {
-                            DialogRoom dialogRoom = new DialogRoom();
-                            dialogRoom.setIdmessage(response.body().getIdmessage());
-                            dialogRoom.setDate(response.body().getDate());
-                            dialogRoom.setIdincoming(response.body().getIdincoming());
-                            dialogRoom.setIdchats(response.body().getIdchats());
-                            dialogRoom.setContent(response.body().getContent());
-                            dialogRoom.setTime(response.body().getTime());
-                            db.getDialogDao().insert(dialogRoom);
-                            ChatsRoom chatsRoom = new ChatsRoom();
-                            chatsRoom.setIdchats(response.body().getIdchats());
-                            chatsRoom.setIduser_1(idUser);
-                            chatsRoom.setIduser_2(idFriend);
-                            db.getChatsDao().insert(chatsRoom);
-                            adapter.updateList(dialogRoom);
-                            adapter.notifyDataSetChanged();
-                        } else {
-                            DialogRoom dialogRoom = new DialogRoom();
-                            dialogRoom.setIdmessage(response.body().getIdmessage());
-                            dialogRoom.setDate(response.body().getDate());
-                            dialogRoom.setIdincoming(response.body().getIdincoming());
-                            dialogRoom.setIdchats(response.body().getIdchats());
-                            dialogRoom.setContent(response.body().getContent());
-                            dialogRoom.setTime(response.body().getTime());
-                            db.getDialogDao().insert(dialogRoom);
-                            adapter.addItem(dialogRoom);
-                            adapter.notifyDataSetChanged();
-                        }
-
-                    }
-
-                    @Override
-                    public void onFailure(Call<DialogGet> call, Throwable t) {
-
-                    }
-                });
-                content.setText(null);
-            }
-        });
-
+        clear = findViewById(R.id.clear);
+        send.setOnClickListener(this);
+        photo.setOnClickListener(this);
+        clear.setOnClickListener(this);
         adapter = new RecyclerViewAdapterMessage(db.getProfileDao().getProfile().getIduser());
         message.setAdapter(adapter);
         messageThread = new MessageThread();
@@ -167,6 +132,131 @@ public class MessageActivity extends AppCompatActivity {
         super.onDestroy();
         check = false;
         Log.d("MyThread", "Stop");
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.send:
+                addMessage();
+                clearPhoto();
+                break;
+            case R.id.photo:
+                startActivityForResult(new Intent(Intent.ACTION_PICK,
+                        android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI), 1);
+                Log.d("ButtonTestMessage","photo");
+                break;
+            case R.id.clear:
+                clearPhoto();
+                Log.d("ButtonTestMessage","clear");
+                break;
+        }
+    }
+
+    private void clearPhoto(){
+        uri = null;
+        photo.setScaleType(ImageView.ScaleType.CENTER);
+        photo.setImageResource(R.drawable.ic_burst_mode_black_24dp);
+        clear.setVisibility(View.GONE);
+//        checkPhoto = false;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1 && resultCode == RESULT_OK) {
+            uri = data.getData();
+            Picasso.with(getApplicationContext()).load(uri).into(photo);
+            clear.setVisibility(View.VISIBLE);
+            photo.setScaleType(ImageView.ScaleType.CENTER_CROP);
+//            checkPhoto = true;
+        }
+    }
+
+    private void addMessage(){
+        if (uri != null) {
+            StorageReference mStorageRef = FirebaseStorage.getInstance().getReference();
+            StorageReference storageReference = mStorageRef.child("Photos").child(uri.getLastPathSegment());
+            storageReference.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(final UploadTask.TaskSnapshot taskSnapshot) {
+                    initMessage(String.valueOf(taskSnapshot.getDownloadUrl()));
+                }
+            });
+            uri = null;
+        } else {
+            initMessage(null);
+        }
+    }
+
+    private void initMessage(String photo){
+        String date = String.valueOf(android.text.format.DateFormat.format("yyyy-MM-dd", new java.util.Date()));
+        String time = String.valueOf(android.text.format.DateFormat.format("hh:mm:ss", new java.util.Date()));
+        if (db.getChatsDao().getChat_1(idFriend) == null){
+            final String key = new KeyGen().generate(20);
+            String text = new FS_RC4(key,content.getText().toString()).start();
+            restService.addDialog(db.getProfileDao().getProfile().getIduser(), idFriend,
+                    text, date, time, key, photo).enqueue(new Callback<DialogGet>() {
+                @Override
+                public void onResponse(Call<DialogGet> call, Response<DialogGet> response) {
+                    if (response.body() != null){
+                        DialogRoom dialogRoom = new DialogRoom();
+                        dialogRoom.setIdmessage(response.body().getIdmessage());
+                        dialogRoom.setDate(response.body().getDate());
+                        dialogRoom.setIdincoming(response.body().getIdincoming());
+                        dialogRoom.setIdchats(response.body().getIdchats());
+                        dialogRoom.setContent(content.getText().toString());
+                        dialogRoom.setTime(response.body().getTime());
+                        if (response.body().getPhoto() != null)
+                            dialogRoom.setPhoto(response.body().getPhoto());
+                        db.getDialogDao().insert(dialogRoom);
+                        ChatsRoom chatsRoom = new ChatsRoom();
+                        chatsRoom.setIdchats(response.body().getIdchats());
+                        chatsRoom.setIduser_1(idUser);
+                        chatsRoom.setIduser_2(idFriend);
+                        chatsRoom.setKey(key);
+                        db.getChatsDao().insert(chatsRoom);
+                        adapter.updateList(dialogRoom);
+                        adapter.notifyDataSetChanged();
+                        content.setText(null);
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<DialogGet> call, Throwable t) {
+
+                }
+            });
+        } else {
+            String key = db.getChatsDao().getChat_1(idFriend).getKey();
+            String text = new FS_RC4(key,content.getText().toString()).start();
+            restService.addDialog(db.getProfileDao().getProfile().getIduser(), idFriend,
+                    text, date, time, photo).enqueue(new Callback<DialogGet>() {
+                @Override
+                public void onResponse(Call<DialogGet> call, Response<DialogGet> response) {
+                    if (response.body() != null){
+                        DialogRoom dialogRoom = new DialogRoom();
+                        dialogRoom.setIdmessage(response.body().getIdmessage());
+                        dialogRoom.setDate(response.body().getDate());
+                        dialogRoom.setIdincoming(response.body().getIdincoming());
+                        dialogRoom.setIdchats(response.body().getIdchats());
+                        dialogRoom.setContent(content.getText().toString());
+                        dialogRoom.setTime(response.body().getTime());
+                        if (response.body().getPhoto() != null)
+                            dialogRoom.setPhoto(response.body().getPhoto());
+                        db.getDialogDao().insert(dialogRoom);
+                        adapter.addItem(dialogRoom);
+                        adapter.notifyDataSetChanged();
+                        content.setText(null);
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<DialogGet> call, Throwable t) {
+
+                }
+            });
+        }
     }
 
     class MessageThread extends Thread {
@@ -192,8 +282,6 @@ public class MessageActivity extends AppCompatActivity {
                                     adapter.updateList(db.getDialogDao().getAllDialogs(db.getChatsDao().getChat_1(idFriend).getIdchats()));
                                     adapter.notifyDataSetChanged();
                                 }
-
-
                         }
                     });
 

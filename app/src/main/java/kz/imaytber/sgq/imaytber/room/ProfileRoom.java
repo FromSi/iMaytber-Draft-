@@ -12,13 +12,15 @@ public class ProfileRoom {
     private String nick;
     private String login;
     private String password;
+    private String api;
 
-    public ProfileRoom(int iduser, String avatar, String nick, String login, String password) {
+    public ProfileRoom(int iduser, String avatar, String nick, String login, String password, String api) {
         this.iduser = iduser;
         this.avatar = avatar;
         this.nick = nick;
         this.login = login;
         this.password = password;
+        this.api = api;
     }
 
     public int getIduser() {
@@ -59,5 +61,13 @@ public class ProfileRoom {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getApi() {
+        return api;
+    }
+
+    public void setApi(String api) {
+        this.api = api;
     }
 }

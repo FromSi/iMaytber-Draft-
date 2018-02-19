@@ -37,6 +37,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import kz.imaytber.sgq.imaytber.crypto.FS_RC4;
 import kz.imaytber.sgq.imaytber.dialog.LogOutDialog;
 import kz.imaytber.sgq.imaytber.retrofit.ChatsGet;
 import kz.imaytber.sgq.imaytber.retrofit.DialogGet;
@@ -119,9 +120,9 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
         return false;
     }
 
-
     class BaseThread extends Thread {
         private String checkAvatar = "default";
+        private String checkNick = db.getProfileDao().getProfile().getNick();
 
         @Override
         public void run() {
@@ -129,19 +130,22 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
             while (checkBool) {
                 try {
                     Thread.sleep(1500);
-                    if (checkBool){
+                    if (checkBool) {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                String str = db.getProfileDao().getProfile().getAvatar();
-                                if (!checkAvatar.equals(str)) {
+                                nick.setText(db.getProfileDao().getProfile().getNick());
+                                if (!checkAvatar.equals(db.getProfileDao().getProfile().getAvatar())) {
+                                    checkAvatar = db.getProfileDao().getProfile().getAvatar();
                                     loadImg(db.getProfileDao().getProfile().getAvatar());
+                                }
+                                if (!checkNick.equals(db.getProfileDao().getProfile().getNick())) {
+                                    checkNick = db.getProfileDao().getProfile().getNick();
+                                    nick.setText(checkNick);
                                 }
                             }
                         });
-
                         chats = new ArrayList<>();
-
                         createDialog();
                     }
                 } catch (InterruptedException e) {
@@ -156,32 +160,76 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
             @Override
             public void onResponse(Call<List<DialogGet>> call, Response<List<DialogGet>> response) {
                 if (response.body() != null) {
-                    for (int i = 0; i < response.body().size(); i++) {
+                    final List<DialogGet> list = response.body();
+                    for (int i = 0; i < list.size(); i++) {
+                        if (db.getDialogDao().getDialog_2(list.get(i).getIdmessage()) == null) {
+                            if (db.getChatsDao().getChat_2(list.get(i).getIdchats()) == null) {
+                                final int j = i;
+                                restService.getChat(list.get(i).getIdchats()).enqueue(new Callback<ChatsGet>() {
+                                    @Override
+                                    public void onResponse(Call<ChatsGet> call, Response<ChatsGet> response) {
+                                        final ChatsRoom chatsRoom = new ChatsRoom();
+                                        chatsRoom.setIdchats(response.body().getIdchats());
+                                        chatsRoom.setIduser_1(response.body().getIduser_1());
+                                        chatsRoom.setIduser_2(response.body().getIduser_2());
+                                        chatsRoom.setKey(response.body().getKey());
+                                        db.getChatsDao().insert(chatsRoom);
 
-                        if (db.getDialogDao().getDialog_2(response.body().get(i).getIdmessage()) == null) {
-
-                                DialogRoom dialogRoom = new DialogRoom();
-                                dialogRoom.setIdmessage(response.body().get(i).getIdmessage());
-                                dialogRoom.setDate(response.body().get(i).getDate());
-                                dialogRoom.setIdincoming(response.body().get(i).getIdincoming());
-                                dialogRoom.setIdchats(response.body().get(i).getIdchats());
-                                dialogRoom.setContent(response.body().get(i).getContent());
-                                dialogRoom.setTime(response.body().get(i).getTime());
-                                db.getDialogDao().insert(dialogRoom);
-
-                                if (db.getChatsDao().getChat_2(response.body().get(i).getIdchats()) == null) {
-                                    ChatsRoom chatsRoom = new ChatsRoom();
-                                    chatsRoom.setIdchats(response.body().get(i).getIdchats());
-                                    chatsRoom.setIduser_1(response.body().get(i).getIdpartner());
-                                    chatsRoom.setIduser_2(db.getProfileDao().getProfile().getIduser());
-                                    db.getChatsDao().insert(chatsRoom);
-                                    if (response.body().get(i).getIdpartner() !=
-                                            db.getProfileDao().getProfile().getIduser()) {
-                                        initUserDB(db.getChatsDao().getChatAll().get(i).getIduser_1());
-                                    } else {
-                                        initUserDB(db.getChatsDao().getChatAll().get(i).getIduser_2());
+                                        String key = response.body().getKey();
+                                        String text = new FS_RC4(key, list.get(j).getContent()).start();
+                                        final DialogRoom dialogRoom = new DialogRoom();
+                                        dialogRoom.setIdmessage(list.get(j).getIdmessage());
+                                        dialogRoom.setDate(list.get(j).getDate());
+                                        dialogRoom.setIdincoming(list.get(j).getIdincoming());
+                                        dialogRoom.setIdchats(list.get(j).getIdchats());
+                                        dialogRoom.setContent(text);
+                                        dialogRoom.setTime(list.get(j).getTime());
+                                        if (list.get(j).getPhoto() != null)
+                                        dialogRoom.setPhoto(list.get(j).getPhoto());
+                                        if (list.get(j).getPhoto() != null)
+                                            dialogRoom.setPhoto(list.get(j).getPhoto());
+                                        db.getDialogDao().insert(dialogRoom);
+                                        if (list.get(j).getIdpartner() !=
+                                                db.getProfileDao().getProfile().getIduser()) {
+                                            initUserDB(db.getChatsDao().getChatAll().get(j).getIduser_1());
+                                        } else {
+                                            initUserDB(db.getChatsDao().getChatAll().get(j).getIduser_2());
+                                        }
                                     }
-                                }
+
+                                    @Override
+                                    public void onFailure(Call<ChatsGet> call, Throwable t) {
+
+                                    }
+                                });
+
+                            } else {
+                                String key = db.getChatsDao().getChat_2(list.get(i).getIdchats()).getKey();
+                                String text = new FS_RC4(key, list.get(i).getContent()).start();
+                                DialogRoom dialogRoom = new DialogRoom();
+                                dialogRoom.setIdmessage(list.get(i).getIdmessage());
+                                dialogRoom.setDate(list.get(i).getDate());
+                                dialogRoom.setIdincoming(list.get(i).getIdincoming());
+                                dialogRoom.setIdchats(list.get(i).getIdchats());
+                                dialogRoom.setContent(text);
+                                dialogRoom.setTime(list.get(i).getTime());
+                                if (list.get(i).getPhoto() != null)
+                                dialogRoom.setPhoto(list.get(i).getPhoto());
+                                if (list.get(i).getPhoto() != null)
+                                    dialogRoom.setPhoto(list.get(i).getPhoto());
+                                db.getDialogDao().insert(dialogRoom);
+                            }
+//                            String key = response.body().get(i).getKey();
+//                            String text = new FS_RC4(key, response.body().get(i).getContent()).start();
+//                            DialogRoom dialogRoom = new DialogRoom();
+//                            dialogRoom.setIdmessage(response.body().get(i).getIdmessage());
+//                            dialogRoom.setDate(response.body().get(i).getDate());
+//                            dialogRoom.setIdincoming(response.body().get(i).getIdincoming());
+//                            dialogRoom.setIdchats(response.body().get(i).getIdchats());
+//                            dialogRoom.setContent(text);
+//                            dialogRoom.setTime(response.body().get(i).getTime());
+//                            db.getDialogDao().insert(dialogRoom);
+
                         }
                     }
                 }
@@ -205,6 +253,8 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
             dialogRoom.setIdchats(local.getIdchats());
             dialogRoom.setContent(local.getContent());
             dialogRoom.setTime(local.getTime());
+            if (local.getPhoto() != null)
+            dialogRoom.setPhoto(local.getPhoto());
             chats.add(dialogRoom);
         }
         if (db.getDialogDao().getChats() != null) {
@@ -218,32 +268,32 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    private void initUserDB(int idUser){
+    private void initUserDB(int idUser) {
         if (db.getUsersDao().getUser(idUser) == null)
-        restService.getUser(idUser).enqueue(new Callback<UserGet>() {
-            @Override
-            public void onResponse(Call<UserGet> call, Response<UserGet> response) {
-                if (db.getUsersDao().getUser(response.body().getIduser()) == null) {
-                    UsersRoom usersRoom = new UsersRoom();
-                    usersRoom.setNick(response.body().getNick());
-                    usersRoom.setAvatar(response.body().getAvatar());
-                    usersRoom.setIduser(response.body().getIduser());
-                    db.getUsersDao().insert(usersRoom);
-                    Log.d("Test228", "Norm");
+            restService.getUser(idUser).enqueue(new Callback<UserGet>() {
+                @Override
+                public void onResponse(Call<UserGet> call, Response<UserGet> response) {
+                    if (db.getUsersDao().getUser(response.body().getIduser()) == null) {
+                        UsersRoom usersRoom = new UsersRoom();
+                        usersRoom.setNick(response.body().getNick());
+                        usersRoom.setAvatar(response.body().getAvatar());
+                        usersRoom.setIduser(response.body().getIduser());
+                        db.getUsersDao().insert(usersRoom);
+                        Log.d("Test228", "Norm");
+                    }
                 }
-            }
 
-            @Override
-            public void onFailure(Call<UserGet> call, Throwable t) {
-                Log.d("Test228", "Field");
-            }
-        });
+                @Override
+                public void onFailure(Call<UserGet> call, Throwable t) {
+                    Log.d("Test228", "Field");
+                }
+            });
     }
 
-    private void chashImg(ImageView img, String name){
+    private void chashImg(ImageView img, String name) {
         try {
-            OutputStream outputStream = new FileOutputStream(new File(this.getCacheDir(), name.substring(73)+".jpg"));
-            Bitmap bitmap = ((BitmapDrawable)img.getDrawable()).getBitmap();
+            OutputStream outputStream = new FileOutputStream(new File(this.getCacheDir(), name.substring(73) + ".jpg"));
+            Bitmap bitmap = ((BitmapDrawable) img.getDrawable()).getBitmap();
             bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
             outputStream.flush();
             outputStream.close();
@@ -252,14 +302,14 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    private void loadImg(final String uri){
-        if (uri.equals("default")){
+    private void loadImg(final String uri) {
+        if (uri.equals("default")) {
             Picasso.with(getApplicationContext())
                     .load(R.drawable.ic_launcher_background)
                     .into(avatar);
         } else {
-            File file = new File(this.getCacheDir(), uri.substring(73)+".jpg");
-            if (file.isFile()){
+            File file = new File(this.getCacheDir(), uri.substring(73) + ".jpg");
+            if (file.isFile()) {
                 avatar.setImageBitmap(BitmapFactory.decodeFile(file.getAbsolutePath()));
             } else {
                 Picasso.with(getApplicationContext())
@@ -267,7 +317,7 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
                         .into(avatar, new com.squareup.picasso.Callback() {
                             @Override
                             public void onSuccess() {
-                                chashImg(avatar,uri);
+                                chashImg(avatar, uri);
                             }
 
                             @Override
@@ -281,7 +331,7 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
 
     }
 
-    private void init(){
+    private void init() {
         retrofit = new Retrofit.Builder()
                 .baseUrl(URL_RETROFIT)
                 .addConverterFactory(GsonConverterFactory.create(new GsonBuilder().create()))
@@ -296,7 +346,7 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
             @Override
             public void onDrawerClosed(View drawerView) {
                 super.onDrawerClosed(drawerView);
-                if (intent != null){
+                if (intent != null) {
                     startActivity(intent);
                     intent = null;
                 }
@@ -307,8 +357,8 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
         navigationView = findViewById(R.id.navDrawer);
         nick = navigationView.getHeaderView(0).findViewById(R.id.nick);
         id_user = navigationView.getHeaderView(0).findViewById(R.id.id_user);
-        nick.setText(db.getProfileDao().getProfile().getNick());
-        id_user.setText("#"+db.getProfileDao().getProfile().getIduser());
+
+        id_user.setText("#" + db.getProfileDao().getProfile().getIduser());
         avatar = navigationView.getHeaderView(0).findViewById(R.id.avatar);
         navigationView.setNavigationItemSelectedListener(this);
         linearLayoutManager = new LinearLayoutManager(this);

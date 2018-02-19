@@ -29,6 +29,9 @@ public class DialogGet {
     @SerializedName("idpartner")
     @Expose
     private int idpartner;
+    @SerializedName("photo")
+    @Expose
+    private String photo;
 
     public int getIdpartner() {
         return idpartner;
@@ -84,5 +87,13 @@ public class DialogGet {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public String getPhoto() {
+        return photo;
+    }
+
+    public void setPhoto(String photo) {
+        this.photo = photo;
     }
 }

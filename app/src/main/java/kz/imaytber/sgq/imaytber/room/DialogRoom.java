@@ -13,6 +13,7 @@ public class DialogRoom {
     private int idchats;
     private String time;
     private String content;
+    private String photo;
 
     public int getIdmessage() {
         return idmessage;
@@ -60,5 +61,13 @@ public class DialogRoom {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public String getPhoto() {
+        return photo;
+    }
+
+    public void setPhoto(String photo) {
+        this.photo = photo;
     }
 }

@@ -28,7 +28,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class FriendsActivity extends AppCompatActivity {
     private RestService restService;
-    private Gson gson;
     private Retrofit retrofit;
     private final String URL_RETROFIT = "https://fs-messenger.herokuapp.com/";
 
@@ -56,10 +55,9 @@ public class FriendsActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         setTitle("Friends");
-        gson = new GsonBuilder().create();
         retrofit = new Retrofit.Builder()
                 .baseUrl(URL_RETROFIT)
-                .addConverterFactory(GsonConverterFactory.create(gson))
+                .addConverterFactory(GsonConverterFactory.create(new GsonBuilder().create()))
                 .build();
         restService = retrofit.create(RestService.class);
         adapter = new RecyclerViewAdapterFriend(restService, db, this);
@@ -68,7 +66,7 @@ public class FriendsActivity extends AppCompatActivity {
         add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new AddFriendDialog(db, adapter, restService).show(getSupportFragmentManager(), "AddFriend");
+                new AddFriendDialog(db, adapter, restService).show(getSupportFragmentManager(), "Add_Friend");
             }
         });
         initSwipe();
