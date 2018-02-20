@@ -19,6 +19,9 @@ public interface DialogDao {
 //    @Query("SELECT * FROM dialogroom where idpartner is 11 ORDER BY date DESC, time DESC ")
 //    List<DialogRoom> getDialogs();
 
+    @Query("DELETE FROM dialogroom where idmessage=:idmessage")
+    void deleteMessage(int idmessage);
+
     @Query("SELECT * FROM dialogroom where idchats=:idchats ORDER BY idmessage DESC")
     List<DialogRoom> getAllDialogs(int idchats);
 

@@ -14,6 +14,9 @@
     <string name="dialog_profile">Title</string>
     <string name="dialog_profile_ok">ok</string>
     <string name="dialog_profile_cancel">cancel</string>
+    <string name="dialog_message">You want to delete message?</string>
+    <string name="dialog_message_ok">okey</string>
+    <string name="dialog_message_cancel">cancel</string>
     <string name="screen_one">Работа со строковыми списками используется не часто и, когда используется, то уже опытными андроид </string>
     <string name="screen_two">Здесь я перечислил те неточности и избыточность в коде, которые я изо дня в день встречаю при ревью </string>
     <string name="screen_tre">Android-программер) при изучении платформы сразу подсечёт, как дяди в примерах хранят строки, и </string>

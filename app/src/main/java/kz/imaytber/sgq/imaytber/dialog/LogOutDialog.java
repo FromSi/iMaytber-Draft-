@@ -19,6 +19,7 @@ import kz.imaytber.sgq.imaytber.room.AppDatabase;
  * Created by fromsi on 18.01.18.
  */
 
+@SuppressLint("ValidFragment")
 public class LogOutDialog extends DialogFragment {
     private Intent lock;
     private AppDatabase db;

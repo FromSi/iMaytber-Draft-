@@ -42,6 +42,8 @@ public interface RestService {
     Call<LoginGet> getLogin(@Query("login") String login, @Query("password") String password);
     @DELETE("friend")
     Call<Void> deleteFriend(@Query("idfriends") int infriends);
+    @DELETE("dialog")
+    Call<Void> deleteMessage(@Query("iduser") int iduser, @Query("idmessage") int idmessage);
     @PUT("nick")
     Call<Void> putNick(@Query("iduser") int iduser, @Query("nick") String nick);
     @PUT("avatar")

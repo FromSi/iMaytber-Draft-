@@ -110,7 +110,7 @@ public class MessageActivity extends AppCompatActivity implements View.OnClickLi
         send.setOnClickListener(this);
         photo.setOnClickListener(this);
         clear.setOnClickListener(this);
-        adapter = new RecyclerViewAdapterMessage(db.getProfileDao().getProfile().getIduser());
+        adapter = new RecyclerViewAdapterMessage(this, db.getProfileDao().getProfile().getIduser(), restService, db);
         message.setAdapter(adapter);
         messageThread = new MessageThread();
         messageThread.start();
@@ -138,8 +138,10 @@ public class MessageActivity extends AppCompatActivity implements View.OnClickLi
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.send:
-                addMessage();
-                clearPhoto();
+                if (content.getText().length() != 0){
+                    addMessage();
+                    clearPhoto();
+                }
                 break;
             case R.id.photo:
                 startActivityForResult(new Intent(Intent.ACTION_PICK,
